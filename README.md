@@ -73,10 +73,11 @@
 
 ## 安装
 
-1. 安装 [AM++](https://github.com/Zennmn/AM-plus-plus)，作用域只勾选 `com.apple.android.music`。
-2. 在 AM++ 设置 → 插件 → 导入 `am-bg-pro-max-<版本>.zip`，打开启用开关。
-3. 强制停止并重新打开 Apple Music。
-4. 进入 Apple Music → 设置 → AM++ 模块设置 → 插件 → **AM背景Pro Max**，按需调整。
+1. 从 [Releases](../../releases) 下载 `am-bg-pro-max-<版本>.zip`。
+2. 安装 [AM++](https://github.com/Zennmn/AM-plus-plus)，作用域只勾选 `com.apple.android.music`。
+3. 在 AM++ 设置 → 插件 → 导入下载的 ZIP，打开启用开关。
+4. 强制停止并重新打开 Apple Music。
+5. 进入 Apple Music → 设置 → AM++ 模块设置 → 插件 → **AM背景Pro Max**，按需调整。
 
 > 插件的启用、停用与删除在重启 Apple Music 后生效；其余设置项即时生效。
 
