@@ -43,20 +43,13 @@
 
 ## 效果展示
 
-> 截图与录屏放在 `docs/images/` 下，按下面的文件名补进来即可。
-
-| 位置 | 建议文件名 | 说明 |
-| --- | --- | --- |
-| 主展示 | `docs/images/hero.gif` | 歌词页背景流动，5–10 秒 |
-| 抽屉开合 | `docs/images/drawer.gif` | 上下拉动，展示淡出与让位 |
-| 设置页 | `docs/images/settings.jpg` | 插件设置界面 |
-| 形变预设 | `docs/images/presets.png` | 几种预设的对比 |
-
-```markdown
 <p align="center">
-  <img src="docs/images/hero.gif" width="360" alt="歌词页流体背景">
+  <img src="docs/images/landscape.jpg" width="760" alt="歌词页流体背景（横屏）">
 </p>
-```
+
+<p align="center">
+  <img src="docs/images/portrait.jpg" width="300" alt="歌词页流体背景（竖屏）">
+</p>
 
 ## 功能
 
