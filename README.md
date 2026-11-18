@@ -56,7 +56,7 @@
 | 功能 | 默认 | 说明 |
 | --- | --- | --- |
 | 流体背景 | 开启 | 模糊封面 + 三层旋转 + 网格形变，GPU 绘制 |
-| 跟随抽屉 | 始终 | 透明度按歌词页开合程度逐帧计算，收起时不遮挡其他界面 |
+| 跟随抽屉 | 无需设置 | 透明度按歌词页开合程度逐帧计算，收起时不遮挡其他界面 |
 | 形变预设 | 全选 | 5 套网格预设；勾选多个时随机，只勾一个则固定 |
 | 使用封面生成背景 | 开启 | 关闭后改用调色盘渐变 |
 | 背景模糊 | 开启 | 控制渲染器里的高斯模糊 pass |
@@ -130,17 +130,34 @@
 
 ## 从源码构建
 
-需要 **JDK 17**、**Android SDK Platform 37**、**Build Tools 37.0.0**。
+需要 **JDK 17**、**Android SDK Platform 37** 与 **Build Tools 37.0.0**，用环境变量指向它们：
 
 ```powershell
-# 插件 → output/am-bg-pro-max-<版本>.zip
-powershell -ExecutionPolicy Bypass -File project/build.ps1
+$env:JAVA_HOME    = "C:\Program Files\Java\jdk-17"
+$env:ANDROID_HOME = "C:\Android\Sdk"
+```
 
-# 配套应用（可选）→ output/audio-capture-for-am-bg-pro-max-<版本>.apk
+构建插件：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File project/build.ps1
+```
+
+产物为 `output/am-bg-pro-max-<版本>.zip`。
+
+配套应用还需要签名材料，同样通过环境变量提供，密钥文件不要提交到仓库：
+
+```powershell
+$env:AMBG_KEYSTORE      = "C:\keys\release.keystore"
+$env:AMBG_KEY_ALIAS     = "release"
+$env:AMBG_KEYSTORE_PASS = "你的密码"
+# 可选，未设置时与 keystore 密码相同
+$env:AMBG_KEY_PASS      = "你的密码"
+
 powershell -ExecutionPolicy Bypass -File audio-bridge/build.ps1
 ```
 
-配套应用签名需要 `output/` 下的 keystore，首次构建前请自行生成（`keytool -genkeypair`），并在 `audio-bridge/build.ps1` 里改成你的路径与别名。
+产物为 `output/audio-capture-for-am-bg-pro-max-<版本>.apk`。
 
 AM++ Plugin API 的源码放在 `project/vendor`，仅作为编译接口，不随插件分发。
 
@@ -174,7 +191,7 @@ NOTICE                  第三方声明
 配套应用的 `versionCode` 若低于已安装版本，系统会拒绝安装。先卸载旧版，或在构建时提高 `versionCode`。
 
 **背景是黑的？**
-说明原生层被隐藏了、我们的图层却没有内容。先看设置页自检里的"挂载"数字，再看 logcat：`adb logcat -s AppleMusicEnhancer`，过滤本插件 ID。
+说明原生层已被隐藏，而插件图层没有渲染出内容。先看设置页自检里的"挂载"数字，再看 logcat：`adb logcat -s AppleMusicEnhancer`，过滤本插件 ID。
 
 **音频一直静音？**
 见[音频律动](#音频律动)。这是系统与内容保护的限制，插件没有绕过手段。
