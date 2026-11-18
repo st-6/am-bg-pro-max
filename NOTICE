@@ -1,0 +1,19 @@
+AM背景Pro Max
+Copyright 2026 Zen
+
+This product includes software developed as part of the
+WXRIW/Lyricify-Backgrounds project
+(https://github.com/WXRIW/Lyricify-Backgrounds),
+licensed under the Apache License, Version 2.0.
+
+Ported material:
+  AppleMusicIosMesh.cs      -> project/src/main/java/dev/zen/lyricbg/render/MeshPresets.java,
+                               project/src/main/java/dev/zen/lyricbg/render/MeshWarp.java
+  AppleMusicIosBackground.hlsl -> project/src/main/java/dev/zen/lyricbg/render/FluidGlRenderer.java,
+                               project/src/main/java/dev/zen/lyricbg/render/BlurKernel.java
+
+The full Apache License 2.0 text is provided in LICENSE, and the upstream
+license copy is provided in project/THIRD-PARTY-LICENSES.txt.
+
+AM背景Pro Max is an independent project. It is not affiliated with,
+endorsed by, or published on behalf of the Lyricify project or its authors.

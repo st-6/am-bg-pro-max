@@ -1,0 +1,39 @@
+# 构建产物
+build/
+build-*/
+dist/
+output/
+*.zip
+*.apk
+*.idsig
+*.dex
+*.class
+*.jar
+
+# 签名材料（切勿提交）
+*.keystore
+*.jks
+keystore.properties
+
+# 本地工具链与第三方检出
+toolchain/
+tools/
+source/
+analysis/
+
+# 回档源码（仅本地参考）
+project-419/
+
+# 编辑器与系统文件
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+*.lnk
+
+# 临时脚本与素材
+base64.txt
+ref.jpg
+analyze*.ps1
+VISIBLE_TEXT_INVENTORY.md
