@@ -5,7 +5,7 @@
   "name": "AM背景Pro Max",
   "author": "Zen",
   "versionName": "1.0.1",
-  "versionCode": 5,
+  "versionCode": 7,
   "entryClass": "dev.zen.lyricbg.LyricBackgroundsPlugin",
   "minAndroidApi": 26,
   "description": "替换原版安卓 Apple Music 歌词页背景。视觉管线移植自开源项目 WXRIW/Lyricify-Backgrounds（Apache-2.0），本插件为独立使用方，与 Lyricify 无隶属或授权关系。"

@@ -55,7 +55,7 @@ final class SettingsStore {
         this.metronome = Boolean.parseBoolean(properties.getProperty(KEY_METRONOME, "false"));
         int mask = Integer.parseInt(properties.getProperty(KEY_PRESETS, "31"));
         this.presetMask = (mask & 31) == 0 ? 31 : (mask & 31);
-        this.audioTap = Boolean.parseBoolean(properties.getProperty(KEY_AUDIO_TAP, "false"));
+        this.audioTap = Boolean.parseBoolean(properties.getProperty(KEY_AUDIO_TAP, "true"));
         this.blurEnabled = Boolean.parseBoolean(properties.getProperty(KEY_BLUR, "true"));
         this.cleanExtremes = Boolean.parseBoolean(properties.getProperty(KEY_CLEAN_EXTREMES, "false"));
         this.cleanStrength = SettingsStore.clampCleanStrength(Float.parseFloat(properties.getProperty(KEY_CLEAN_STRENGTH, "0.5")));

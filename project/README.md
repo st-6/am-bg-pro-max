@@ -16,7 +16,7 @@
 
 1. 安装 `output/` 下的「音频捕获for AM背景Pro Max」APK（可选，仅真实音频律动需要）。
 2. 在 AM++ 中导入 `output/am-bg-pro-max-*.zip`，启用并重启 Apple Music。
-3. 需要音频律动时，在插件设置启用“读取播放音频”，点“打开内录应用并授权”。
+3. 音频律动默认开启；首次使用时在弹出的音频捕获应用中完成授权。
 
 内录应用以 Android `AudioPlaybackCapture` API 按 Apple Music UID 和 `USAGE_MEDIA` 过滤音频，只在本机计算低频包络并传给插件，不保存或上传 PCM。Android 10 以下不可用；停止或再次启动时需重新确认系统授权。
 
