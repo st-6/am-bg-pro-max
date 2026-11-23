@@ -69,7 +69,7 @@ import java.util.concurrent.Executors;
 final class BackgroundController {
     private static final String LAYER_CLASS = "com.apple.android.music.player.LyricsBackgroundLayerView";
     private static final String TAG = "ampp-fluid-background";
-    private static final long[] VERIFIED_VERSION_CODES = new long[]{1606L, 1607L, 1609L, 1613L, 1614L};
+    private static final long[] VERIFIED_VERSION_CODES = new long[]{1606L, 1607L, 1609L, 1613L, 1614L, 1622L, 1624L, 1626L};
     private final PluginContext context;
     private final SettingsStore settings;
     private final AudioLevelSource audio;
@@ -90,6 +90,10 @@ final class BackgroundController {
     private WeakReference<View> lyricsAnchor = new WeakReference<View>(null);
     private boolean prepared;
     private int lastPresetMask = -1;
+    private Bitmap lastArtwork;
+    private Bitmap lastRawArtwork;
+    private boolean appliedCleanEnabled;
+    private float appliedCleanStrength = -1.0f;
     private int attachAttempts;
     private int attachFailures;
     private boolean audioCheckScheduled;
@@ -465,9 +469,27 @@ final class BackgroundController {
             }
             meshBackgroundView.setIntensity(this.settings.intensity());
             if (this.settings.followArtwork() && bitmap != null) {
-                meshBackgroundView.setArtwork(bitmap);
-                if (bitmap.getWidth() > 0) {
-                    this.logOnce("artwork-applied", "背景图已应用 " + bitmap.getWidth() + "x" + bitmap.getHeight());
+                this.rememberRawArtwork(bitmap);
+                Bitmap processed = this.preprocessArtwork(bitmap);
+                this.rememberArtwork(processed);
+                meshBackgroundView.setArtwork(processed);
+                if (processed != null && processed.getWidth() > 0) {
+                    this.logOnce("artwork-applied", "背景图已应用 " + processed.getWidth() + "x" + processed.getHeight());
+                }
+            } else if (this.settings.followArtwork() && this.lastArtwork != null
+                    && !this.lastArtwork.isRecycled()) {
+                // The page was rebuilt after the process sat in the background:
+                // reuse the last cover instead of falling back to the palette.
+                Bitmap restored = null;
+                try {
+                    restored = this.lastArtwork.copy(Bitmap.Config.ARGB_8888, false);
+                }
+                catch (Throwable ignored) {
+                }
+                if (restored != null) {
+                    meshBackgroundView.setArtwork(restored);
+                } else {
+                    meshBackgroundView.setPalette(Palette.fallback());
                 }
             } else {
                 meshBackgroundView.setPalette(Palette.fallback());
@@ -522,13 +544,117 @@ final class BackgroundController {
             rootView.getViewTreeObserver().addOnPreDrawListener((ViewTreeObserver.OnPreDrawListener)session2);
         }
         this.main.postDelayed(() -> this.pullArtwork(view, session2), 500L);
+        this.main.postDelayed(() -> this.pullArtwork(view, session2), 2500L);
         return meshBackgroundView;
     }
 
-    private void pullArtwork(View view, Session session) {
-        if (session.pulled) {
+    /** Keeps one software copy of the cover so a rebuilt page can restore it. */
+    private void rememberArtwork(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled()) {
             return;
         }
+        try {
+            Bitmap copy = bitmap.copy(Bitmap.Config.ARGB_8888, false);
+            if (copy == null) return;
+            Bitmap old = this.lastArtwork;
+            this.lastArtwork = copy;
+            if (old != null && !old.isRecycled()) old.recycle();
+        }
+        catch (Throwable ignored) {
+        }
+    }
+
+    private void rememberRawArtwork(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled()) {
+            return;
+        }
+        try {
+            Bitmap copy = bitmap.copy(Bitmap.Config.ARGB_8888, false);
+            if (copy == null) return;
+            Bitmap old = this.lastRawArtwork;
+            this.lastRawArtwork = copy;
+            if (old != null && !old.isRecycled()) old.recycle();
+        }
+        catch (Throwable ignored) {
+        }
+    }
+
+    private Bitmap preprocessArtwork(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled()) {
+            return bitmap;
+        }
+        if (!this.settings.cleanExtremes()) {
+            return bitmap;
+        }
+        try {
+            Bitmap cleaned = ArtworkProcessor.cleanExtremes(bitmap, this.settings.cleanStrength());
+            if (cleaned != null && cleaned != bitmap) {
+                if (!bitmap.isRecycled()) {
+                    bitmap.recycle();
+                }
+                return cleaned;
+            }
+        }
+        catch (Throwable throwable) {
+            this.reportOnce("clean-extremes", throwable);
+        }
+        return bitmap;
+    }
+
+    private void reapplyCleanArtwork() {
+        Bitmap raw = this.lastRawArtwork;
+        Bitmap fresh = null;
+        if (raw == null || raw.isRecycled()) {
+            for (Session session : new ArrayList<Session>(this.sessions.values())) {
+                fresh = this.artworkFromHostNow(session.host);
+                if (fresh != null) {
+                    this.rememberRawArtwork(fresh);
+                    raw = fresh;
+                    break;
+                }
+            }
+        }
+        if (raw == null || raw.isRecycled()) {
+            return;
+        }
+        Bitmap copy = null;
+        try {
+            copy = raw.copy(Bitmap.Config.ARGB_8888, false);
+        }
+        catch (Throwable ignored) {
+        }
+        if (copy == null) {
+            if (fresh != null && !fresh.isRecycled()) {
+                fresh.recycle();
+            }
+            return;
+        }
+        Bitmap processed = this.preprocessArtwork(copy);
+        this.rememberArtwork(processed);
+        for (Session session : new ArrayList<Session>(this.sessions.values())) {
+            Bitmap target = null;
+            try {
+                target = processed.copy(Bitmap.Config.ARGB_8888, false);
+            }
+            catch (Throwable ignored) {
+            }
+            if (target != null) {
+                session.background.setArtwork(target);
+            }
+        }
+        if (processed != null && !processed.isRecycled()) {
+            processed.recycle();
+        }
+        if (fresh != null && !fresh.isRecycled()) {
+            fresh.recycle();
+        }
+    }
+
+    private void pullArtwork(View view, Session session) {
+        if (session.pullAttempts >= 2) {
+            return;
+        }
+        session.pullAttempts++;
         session.pulled = true;
         try {
             View view2 = view.getRootView();
@@ -555,8 +681,12 @@ final class BackgroundController {
             if (bitmap2 == null) {
                 return;
             }
-            session.background.setArtwork(bitmap2);
-            this.logOnce("artwork-pulled", "从播放器封面视图取图成功 " + bitmap2.getWidth() + "x" + bitmap2.getHeight());
+            this.rememberRawArtwork(bitmap2);
+            Bitmap processed = this.preprocessArtwork(bitmap2);
+            this.rememberArtwork(processed);
+            session.background.setArtwork(processed);
+            session.pullAttempts = 2;
+            this.logOnce("artwork-pulled", "从播放器封面视图取图成功 " + processed.getWidth() + "x" + processed.getHeight());
         }
         catch (Throwable throwable) {
             this.reportOnce("pull", throwable);
@@ -696,6 +826,13 @@ final class BackgroundController {
                     this.removeSession(view);
                 }
                 return;
+            }
+            boolean cleanChanged = this.appliedCleanEnabled != this.settings.cleanExtremes()
+                    || Math.abs(this.appliedCleanStrength - this.settings.cleanStrength()) > 0.001f;
+            if (cleanChanged) {
+                this.appliedCleanEnabled = this.settings.cleanExtremes();
+                this.appliedCleanStrength = this.settings.cleanStrength();
+                this.reapplyCleanArtwork();
             }
             for (Session session : new ArrayList<Session>(this.sessions.values())) {
                 session.background.setIntensity(this.settings.intensity());
@@ -857,6 +994,7 @@ final class BackgroundController {
         int generation;
         boolean hiddenByUs;
         boolean pulled;
+        int pullAttempts;
 
         Session(View view, MeshBackgroundView meshBackgroundView) {
             this.host = view;

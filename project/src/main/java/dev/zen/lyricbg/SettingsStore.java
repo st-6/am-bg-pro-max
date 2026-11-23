@@ -23,6 +23,8 @@ final class SettingsStore {
     private static final String KEY_PRESETS = "presetMask";
     private static final String KEY_AUDIO_TAP = "audioTap";
     private static final String KEY_BLUR = "blurEnabled";
+    private static final String KEY_CLEAN_EXTREMES = "cleanExtremes";
+    private static final String KEY_CLEAN_STRENGTH = "cleanStrength";
     private final File file;
     private volatile boolean enabled;
     private volatile float intensity;
@@ -32,6 +34,8 @@ final class SettingsStore {
     private volatile int presetMask;
     private volatile boolean audioTap;
     private volatile boolean blurEnabled;
+    private volatile boolean cleanExtremes;
+    private volatile float cleanStrength;
 
     SettingsStore(PluginContext pluginContext) {
         this.file = new File(pluginContext.getDataDirectory(), FILE_NAME);
@@ -53,6 +57,8 @@ final class SettingsStore {
         this.presetMask = (mask & 31) == 0 ? 31 : (mask & 31);
         this.audioTap = Boolean.parseBoolean(properties.getProperty(KEY_AUDIO_TAP, "false"));
         this.blurEnabled = Boolean.parseBoolean(properties.getProperty(KEY_BLUR, "true"));
+        this.cleanExtremes = Boolean.parseBoolean(properties.getProperty(KEY_CLEAN_EXTREMES, "false"));
+        this.cleanStrength = SettingsStore.clampCleanStrength(Float.parseFloat(properties.getProperty(KEY_CLEAN_STRENGTH, "0.5")));
     }
 
     boolean enabled() {
@@ -85,6 +91,14 @@ final class SettingsStore {
 
     boolean blurEnabled() {
         return this.blurEnabled;
+    }
+
+    boolean cleanExtremes() {
+        return this.cleanExtremes;
+    }
+
+    float cleanStrength() {
+        return this.cleanStrength;
     }
 
     void setEnabled(boolean bl) {
@@ -127,6 +141,16 @@ final class SettingsStore {
         this.save();
     }
 
+    void setCleanExtremes(boolean bl) {
+        this.cleanExtremes = bl;
+        this.save();
+    }
+
+    void setCleanStrength(float f) {
+        this.cleanStrength = SettingsStore.clampCleanStrength(f);
+        this.save();
+    }
+
     private static float clampBpm(float f) {
         if (Float.isNaN(f)) {
             return 100.0f;
@@ -141,6 +165,13 @@ final class SettingsStore {
         return Math.max(0.0f, Math.min(1.0f, f));
     }
 
+    private static float clampCleanStrength(float f) {
+        if (Float.isNaN(f)) {
+            return 0.5f;
+        }
+        return Math.max(0.25f, Math.min(0.75f, f));
+    }
+
     private synchronized void save() {
         Properties properties = new Properties();
         properties.setProperty(KEY_ENABLED, Boolean.toString(this.enabled));
@@ -151,6 +182,8 @@ final class SettingsStore {
         properties.setProperty(KEY_PRESETS, Integer.toString(this.presetMask));
         properties.setProperty(KEY_AUDIO_TAP, Boolean.toString(this.audioTap));
         properties.setProperty(KEY_BLUR, Boolean.toString(this.blurEnabled));
+        properties.setProperty(KEY_CLEAN_EXTREMES, Boolean.toString(this.cleanExtremes));
+        properties.setProperty(KEY_CLEAN_STRENGTH, Float.toString(this.cleanStrength));
         try (FileOutputStream fileOutputStream = new FileOutputStream(this.file);){
             properties.store(fileOutputStream, "AM++ fluid background settings");
         }
